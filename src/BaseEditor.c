@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <errno.h>
 #include <ctype.h>
 #include <windows.h>
 #include <unistd.h>
 
+#include "ErrorHandling.h"
 #include "RawMode.h"
 
 #define MAXLENGTH 10000
@@ -11,15 +13,19 @@ int main() {
 
 	enableRawMode();
 
-	char c;
-	while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+	while (1) {
+		char c = '\0';
+		if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) {
+			die("read");
+		};
 		if (iscntrl(c)) {
-			printf("%d\n", c);
+			printf("%d\r\n", c);
+		} else {
+			printf("%d (%c)\r\n", c, c);
 		}
-		else {
-			printf("%d (%c)\n", c, c);
+		if (c == 'q') {
+			break;
 		}
 	}
-
 	return 0;
 }
